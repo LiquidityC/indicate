@@ -29,8 +29,6 @@ static size_t box_ptr = 0;
 
 static const void* read_clipboard_data(void *userdata, const char *mime_type, size_t *size)
 {
-    SDL_Log("%s", __func__);
-
     Context *ctx = userdata;
     void *data = NULL;
 
@@ -208,17 +206,9 @@ static void run(Context *ctx)
         }
 
         if (ctx->take_screenshot) {
-
-            /* TODO:
-             * SDL_RenderReadPixels doesn't seem to be working on wayland/opengl.
-             * Once that's figured out this should write to clipboard and not to a file.
-             */
             SDL_Log("Rendering to png");
             SDL_Surface *surf = SDL_RenderReadPixels(ctx->renderer, NULL);
             if (surf != NULL) {
-                SDL_Log("Saving screenshot.png");
-                IMG_SavePNG(surf, "/tmp/screenshot.png");
-
                 SDL_IOStream *stream = SDL_IOFromMem(ctx->clipboard_data, CLIPBOARD_SIZE);
                 IMG_SavePNG_IO(surf, stream, SDL_FALSE);
                 ctx->clipboard_data_len = SDL_TellIO(stream);
