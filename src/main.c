@@ -2,45 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "SDL.h"
-#include "SDL_image.h"
-
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui.h"
-
-extern bool ImGui_ImplSDL3_InitForSDLRenderer(SDL_Window *window, SDL_Renderer *renderer);
-extern void ImGui_ImplSDL3_ProcessEvent(const SDL_Event *event);
-extern void ImGui_ImplSDL3_NewFrame();
-extern void ImGui_ImplSDL3_Shutdown();
-
-extern bool ImGui_ImplSDLRenderer3_Init(SDL_Renderer *renderer);
-extern void ImGui_ImplSDLRenderer3_Shutdown();
-extern void ImGui_ImplSDLRenderer3_NewFrame();
-extern void ImGui_ImplSDLRenderer3_RenderDrawData(ImDrawData* draw_data, SDL_Renderer* renderer);
-
-typedef unsigned char u8;
-
-#define CLIPBOARD_SIZE (1024 * 1024)
-
-typedef struct Context {
-    SDL_Window *window;
-    SDL_Renderer *renderer;
-    SDL_Texture *image;
-    SDL_FRect box;
-    u8 clipboard_data[CLIPBOARD_SIZE];
-    size_t clipboard_data_len;
-    struct {
-        bool lbutton_down;
-        bool draw_box;
-        bool take_screenshot;
-        bool rbutton_press;
-    } action;
-    struct {
-        ImGuiContext *ctx;
-        ImGuiIO *io;
-        float box_color[3];
-    } imgui;
-} Context;
+#include "common.h"
+#include "gui.h"
 
 #define MIME_TYPES_LEN 1
 static const char *mime_types[MIME_TYPES_LEN] = { "image/png" };
@@ -127,9 +90,6 @@ static int init_sdl(Context *ctx)
 
     memset(ctx, 0, sizeof(*ctx));
 
-    /* Set context defaults */
-    ctx->imgui.box_color[0] = 1.0f;
-
     result = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
     if (result != 0) {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());
@@ -150,13 +110,6 @@ static int init_sdl(Context *ctx)
 
     const char *renderer_name = SDL_GetRendererName(ctx->renderer);
     SDL_Log("Renderer: %s\n", renderer_name);
-
-    /* Setup dearimgui context */
-    ctx->imgui.ctx = igCreateContext(NULL);
-    ctx->imgui.io = igGetIO();
-    ctx->imgui.io->IniFilename = NULL;
-    ImGui_ImplSDL3_InitForSDLRenderer(ctx->window, ctx->renderer);
-    ImGui_ImplSDLRenderer3_Init(ctx->renderer);
 
     result = 0;
 out:
@@ -179,9 +132,9 @@ static void handle_events(Context *ctx, bool *quit)
             }
         }
 
-        ImGui_ImplSDL3_ProcessEvent(&event);
+        gui_process_event(&event);
 
-        if (!ctx->imgui.io->WantCaptureKeyboard) {
+        if (!gui_has_keyboard(ctx)){
             switch (event.type) {
                 case SDL_EVENT_KEY_DOWN:
                     if (event.key.keysym.sym == SDLK_ESCAPE) {
@@ -191,7 +144,7 @@ static void handle_events(Context *ctx, bool *quit)
             }
         }
 
-        if (!ctx->imgui.io->WantCaptureMouse) {
+        if (!gui_has_mouse(ctx)) {
             switch (event.type) {
                 case SDL_EVENT_CLIPBOARD_UPDATE:
                     if (ctx->image == NULL && SDL_HasClipboardData("image/png")) {
@@ -231,35 +184,6 @@ static void handle_events(Context *ctx, bool *quit)
             }
         }
     }
-}
-
-static void gui_update(Context *ctx)
-{
-        /* ImGui frame start */
-        ImGui_ImplSDLRenderer3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        igNewFrame();
-
-        if (ctx->action.rbutton_press) {
-            igBegin("Controls", &ctx->action.rbutton_press, ImGuiWindowFlags_NoMove);
-
-            igColorEdit3("Box color", ctx->imgui.box_color, 0);
-
-            igSetWindowPos_Vec2((ImVec2) {0, 0}, 0);
-            igSetWindowSize_Vec2((ImVec2) { 0, 0 }, 0);
-            igEnd();
-        }
-
-        if (ctx->image == NULL) {
-            igBegin("Image", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
-
-            int w, h;
-            SDL_GetWindowSize(ctx->window, &w, &h);
-
-            igText("No image in clipboard");
-            igSetWindowPos_Vec2((ImVec2) { (float) w/2 -  igGetWindowWidth()/2, (float) h/2 - igGetWindowHeight()/2 }, 0);
-            igEnd();
-        }
 }
 
 static void run(Context *ctx)
@@ -307,8 +231,7 @@ static void run(Context *ctx)
             ctx->action.take_screenshot = false;
         }
 
-        igRender();
-        ImGui_ImplSDLRenderer3_RenderDrawData(igGetDrawData(), ctx->renderer);
+        gui_render(ctx);
 
         SDL_RenderPresent(ctx->renderer);
     }
@@ -325,6 +248,11 @@ int main(int argc, char *argv[]) {
         goto out;
     }
 
+    result = gui_init(&ctx);
+    if (result != 0) {
+        goto out;
+    }
+
     run(&ctx);
 
 out:
@@ -335,9 +263,7 @@ out:
         SDL_DestroyWindow(ctx.window);
     }
 
-    ImGui_ImplSDLRenderer3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    igDestroyContext(ctx.imgui.ctx);
+    gui_shutdown(&ctx);
 
     SDL_Quit();
 
