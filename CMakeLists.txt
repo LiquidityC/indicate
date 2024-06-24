@@ -17,7 +17,7 @@ add_subdirectory(SDL)
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(SDL_image)
 
-set(IMGUI_STATIC ON)
+set(IMGUI_STATIC ON CACHE STRING "Build as a static library" FORCE)
 add_subdirectory(cimgui)
 
 # Environment defines
@@ -41,7 +41,7 @@ target_include_directories(imgui_impl PRIVATE
 target_compile_definitions(imgui_impl PRIVATE IMGUI_IMPL_API=extern\ \"C\")
 
 # Build the main project
-add_executable(${PROJECT_NAME} 
+add_executable(${PROJECT_NAME}
 	src/main.c
 )
 target_link_libraries(${PROJECT_NAME}
@@ -64,5 +64,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 
 include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME}
-	DESTINATION ${CMAKE_INSTALL_BINDIR}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

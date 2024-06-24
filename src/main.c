@@ -154,6 +154,7 @@ static int init_sdl(Context *ctx)
     /* Setup dearimgui context */
     ctx->imgui.ctx = igCreateContext(NULL);
     ctx->imgui.io = igGetIO();
+    ctx->imgui.io->IniFilename = NULL;
     ImGui_ImplSDL3_InitForSDLRenderer(ctx->window, ctx->renderer);
     ImGui_ImplSDLRenderer3_Init(ctx->renderer);
 
