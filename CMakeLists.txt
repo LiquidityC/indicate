@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7)
 
-project(cbdraw LANGUAGES C VERSION 0.1.0)
+project(indicate LANGUAGES C VERSION 0.1.0)
 
 # Compile and link flags
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -fsanitize=address -fno-omit-frame-pointer")
@@ -20,19 +20,24 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug")
 	set(DEBUG 1)
 endif ()
 
-file(GLOB SOURCE_FILES CONFIGURE_DEPENDS src/*.c)
-
-add_executable(cbdraw ${SOURCE_FILES})
-target_link_libraries(cbdraw
+add_executable(${PROJECT_NAME} 
+	src/main.c
+)
+target_link_libraries(${PROJECT_NAME}
 	SDL3-static
 	SDL3_image-static
 )
-target_include_directories(cbdraw PRIVATE
+target_include_directories(${PROJECT_NAME} PRIVATE
 	SDL/include/SDL3
 	SDL_image/include/SDL3_image
 )
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+	PROGRAM_NAME="${PROJECT_NAME}"
+	PROGRAM_VERSION="${PROJECT_VERSION}"
+	_DEBUG=${DEBUG}
+)
 
 include(GNUInstallDirs)
-install(TARGETS cbdraw
+install(TARGETS ${PROJECT_NAME}
 	DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

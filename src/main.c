@@ -114,7 +114,7 @@ static int init_sdl(Context *ctx)
         goto out;
     }
 
-    result = SDL_CreateWindowAndRenderer("cbdraw", 640, 480, 0, &ctx->window, &ctx->renderer);
+    result = SDL_CreateWindowAndRenderer(PROGRAM_NAME " " PROGRAM_VERSION, 640, 480, 0, &ctx->window, &ctx->renderer);
     if (result != 0) {
         SDL_Log("SDL_CreateWindowAndRenderer failed: %s", SDL_GetError());
         goto out;
