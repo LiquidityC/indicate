@@ -31,3 +31,8 @@ target_include_directories(cbdraw PRIVATE
 	SDL/include/SDL3
 	SDL_image/include/SDL3_image
 )
+
+include(GNUInstallDirs)
+install(TARGETS cbdraw
+	DESTINATION ${CMAKE_INSTALL_BINDIR}
+)

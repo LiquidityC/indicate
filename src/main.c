@@ -1,23 +1,56 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "SDL.h"
 #include "SDL_image.h"
 
 typedef unsigned char u8;
 
+#define CLIPBOARD_SIZE (1024 * 1024)
+
 typedef struct Context {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *image;
     SDL_FRect box;
+    u8 clipboard_data[CLIPBOARD_SIZE];
+    size_t clipboard_data_len;
     bool button_down;
     bool draw_box;
     bool take_screenshot;
 } Context;
 
+#define MIME_TYPES_LEN 1
+static const char *mime_types[MIME_TYPES_LEN] = { "image/png" };
+
 static SDL_FRect boxes[10];
 static size_t box_ptr = 0;
+
+static const void* read_clipboard_data(void *userdata, const char *mime_type, size_t *size)
+{
+    SDL_Log("%s", __func__);
+
+    Context *ctx = userdata;
+    void *data = NULL;
+
+    if (ctx->clipboard_data_len == 0) {
+        goto out;
+    }
+
+    if (strcmp(mime_type, "image/png") == 0) {
+        *size = ctx->clipboard_data_len;
+        data = ctx->clipboard_data;
+    }
+
+out:
+    return data;
+}
+
+static void clean_clipboard_data(void *userdata)
+{
+    // Pass
+}
 
 static int read_image_from_clipboard(Context *ctx)
 {
@@ -184,8 +217,15 @@ static void run(Context *ctx)
             SDL_Surface *surf = SDL_RenderReadPixels(ctx->renderer, NULL);
             if (surf != NULL) {
                 SDL_Log("Saving screenshot.png");
-                IMG_SavePNG(surf, "screenshot.png");
+                IMG_SavePNG(surf, "/tmp/screenshot.png");
+
+                SDL_IOStream *stream = SDL_IOFromMem(ctx->clipboard_data, CLIPBOARD_SIZE);
+                IMG_SavePNG_IO(surf, stream, SDL_FALSE);
+                ctx->clipboard_data_len = SDL_TellIO(stream);
+                SDL_CloseIO(stream);
                 SDL_DestroySurface(surf);
+
+                SDL_SetClipboardData(read_clipboard_data, clean_clipboard_data, ctx, mime_types, MIME_TYPES_LEN);
             }
 
             ctx->take_screenshot = false;
