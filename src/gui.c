@@ -72,8 +72,12 @@ void gui_update(Context *ctx)
 
             igColorEdit3("Color", ctx->imgui.fg_color, 0);
 
-            igRadioButton_IntPtr("Box", (int *) &ctx->active_symbol_type, SYMBOL_BOX);
-            igRadioButton_IntPtr("Line", (int*) &ctx->active_symbol_type, SYMBOL_LINE);
+            igRadioButton_IntPtr("Box", (int *) &ctx->opt.symbol_type, SYMBOL_BOX);
+            igRadioButton_IntPtr("Line", (int*) &ctx->opt.symbol_type, SYMBOL_LINE);
+
+            if (ctx->opt.symbol_type == SYMBOL_BOX) {
+                igSliderInt("Stroke", (int*) &ctx->opt.size, MIN_STROKE_WIDTH, MAX_STROKE_WIDTH, "%d px", 0);
+            }
 
             if (igButton("Undo", (ImVec2) {50, 20})) {
                 ctx->action.undo = true;

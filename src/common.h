@@ -10,6 +10,10 @@
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui.h"
 
+#define MIN_STROKE_WIDTH 1
+#define MAX_STROKE_WIDTH 8
+#define DEFAULT_STROKE_WIDTH 3
+
 typedef unsigned char u8;
 
 typedef enum SymbolType {
@@ -21,6 +25,7 @@ typedef struct Symbol {
     SymbolType type;
     SDL_FPoint start;
     SDL_FPoint end;
+    u8 size;
     struct {
         u8 r;
         u8 g;
@@ -41,11 +46,14 @@ typedef struct Context {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *image;
-    SymbolType active_symbol_type;
     Symbol active_symbol;
     u8 clipboard_data[CLIPBOARD_SIZE];
     size_t clipboard_data_len;
     UserAction action;
+    struct {
+        SymbolType symbol_type;
+        int size;
+    } opt;
     struct {
         ImGuiContext *ctx;
         ImGuiIO *io;

@@ -148,9 +148,9 @@ static void handle_events(Context *ctx, bool *quit)
                     } else if (event.key.keysym.sym == SDLK_z && event.key.keysym.mod & SDL_KMOD_CTRL) {
                         ctx->action.undo = true;
                     } else if (event.key.keysym.sym == SDLK_1) {
-                        ctx->active_symbol_type = SYMBOL_BOX;
+                        ctx->opt.symbol_type = SYMBOL_BOX;
                     } else if (event.key.keysym.sym == SDLK_2) {
-                        ctx->active_symbol_type = SYMBOL_LINE;
+                        ctx->opt.symbol_type = SYMBOL_LINE;
                     }
                     break;
 
@@ -174,7 +174,8 @@ static void handle_events(Context *ctx, bool *quit)
                         ctx->active_symbol.color.a = 255;
                         ctx->active_symbol.start.x = event.button.x;
                         ctx->active_symbol.start.y = event.button.y;
-                        ctx->active_symbol.type = ctx->active_symbol_type;
+                        ctx->active_symbol.type = ctx->opt.symbol_type;
+                        ctx->active_symbol.size = ctx->opt.size;
                         ctx->action.lbutton_down = true;
                     } else if (event.button.button == SDL_BUTTON_RIGHT) {
                         ctx->action.rbutton_press ^= true;
@@ -193,7 +194,8 @@ static void handle_events(Context *ctx, bool *quit)
                         ctx->action.draw_symbol = false;
                         ctx->action.take_screenshot = true;
                         if (symbol_ptr < SYMBOL_COUNT) {
-                            symbols[symbol_ptr++] = ctx->active_symbol;
+                            memcpy(&symbols[symbol_ptr], &ctx->active_symbol, sizeof(ctx->active_symbol));
+                            symbol_ptr++;
                         }
                     }
                     break;
@@ -258,8 +260,9 @@ static void run(Context *ctx)
 
 static void set_context_defaults(Context *ctx)
 {
-    ctx->imgui.fg_color[0] = 1.0f;
-    ctx->active_symbol_type = SYMBOL_BOX;
+    ctx->imgui.fg_color[0] = 1.0f; // Red
+    ctx->opt.size = DEFAULT_STROKE_WIDTH;
+    ctx->opt.symbol_type = SYMBOL_BOX;
 }
 
 int main(int argc, char *argv[]) {
