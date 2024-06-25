@@ -4,12 +4,17 @@
 
 #include "common.h"
 #include "gui.h"
+#include "draw.h"
 
 #define MIME_TYPES_LEN 1
 static const char *mime_types[MIME_TYPES_LEN] = { "image/png" };
 
-static SDL_FRect boxes[10];
-static size_t box_ptr = 0;
+#define TEXTURE_COUNT 10
+
+#define SYMBOL_COUNT 10
+
+static Symbol symbols[SYMBOL_COUNT] = {0};
+static size_t symbol_ptr = 0;
 
 static const void* read_clipboard_data(void *userdata, const char *mime_type, size_t *size)
 {
@@ -140,7 +145,15 @@ static void handle_events(Context *ctx, bool *quit)
                     if (event.key.keysym.sym == SDLK_ESCAPE) {
                         *quit = true;
                         break;
+                    } else if (event.key.keysym.sym == SDLK_z && event.key.keysym.mod & SDL_KMOD_CTRL) {
+                        ctx->action.undo = true;
+                    } else if (event.key.keysym.sym == SDLK_1) {
+                        ctx->active_symbol_type = SYMBOL_BOX;
+                    } else if (event.key.keysym.sym == SDLK_2) {
+                        ctx->active_symbol_type = SYMBOL_LINE;
                     }
+                    break;
+
             }
         }
 
@@ -155,8 +168,13 @@ static void handle_events(Context *ctx, bool *quit)
                     break;
                 case SDL_EVENT_MOUSE_BUTTON_DOWN:
                     if (event.button.button == SDL_BUTTON_LEFT) {
-                        ctx->box.x = event.button.x;
-                        ctx->box.y = event.button.y;
+                        ctx->active_symbol.color.r = 255 * ctx->imgui.fg_color[0];
+                        ctx->active_symbol.color.g = 255 * ctx->imgui.fg_color[1];
+                        ctx->active_symbol.color.b = 255 * ctx->imgui.fg_color[2];
+                        ctx->active_symbol.color.a = 255;
+                        ctx->active_symbol.start.x = event.button.x;
+                        ctx->active_symbol.start.y = event.button.y;
+                        ctx->active_symbol.type = ctx->active_symbol_type;
                         ctx->action.lbutton_down = true;
                     } else if (event.button.button == SDL_BUTTON_RIGHT) {
                         ctx->action.rbutton_press ^= true;
@@ -164,19 +182,19 @@ static void handle_events(Context *ctx, bool *quit)
                     break;
                 case SDL_EVENT_MOUSE_MOTION:
                     if (ctx->action.lbutton_down) {
-                        ctx->box.w = event.motion.x - ctx->box.x;
-                        ctx->box.h = event.motion.y - ctx->box.y;
-                        ctx->action.draw_box = true;
+                        ctx->active_symbol.end.x = event.button.x;
+                        ctx->active_symbol.end.y = event.button.y;
+                        ctx->action.draw_symbol = true;
                     }
                     break;
                 case SDL_EVENT_MOUSE_BUTTON_UP:
                     if (event.button.button == SDL_BUTTON_LEFT) {
                         ctx->action.lbutton_down = false;
-                        ctx->action.draw_box = false;
-                        if (box_ptr < 10) {
-                            boxes[box_ptr++] = ctx->box;
-                        }
+                        ctx->action.draw_symbol = false;
                         ctx->action.take_screenshot = true;
+                        if (symbol_ptr < SYMBOL_COUNT) {
+                            symbols[symbol_ptr++] = ctx->active_symbol;
+                        }
                     }
                     break;
                 default:
@@ -195,24 +213,25 @@ static void run(Context *ctx)
 
         gui_update(ctx);
 
+        if (ctx->action.undo) {
+            if (symbol_ptr > 0) {
+                symbol_ptr--;
+            }
+            ctx->action.undo = false;
+            ctx->action.take_screenshot = true;
+        }
+
         SDL_SetRenderDrawColor(ctx->renderer, 0, 0, 0, 255);
         SDL_RenderClear(ctx->renderer);
 
         if (ctx->image != NULL) {
             SDL_RenderTexture(ctx->renderer, ctx->image, NULL, NULL);
-        }
-
-        int r = 255 * ctx->imgui.box_color[0];
-        int g = 255 * ctx->imgui.box_color[1];
-        int b = 255 * ctx->imgui.box_color[2];
-
-        SDL_SetRenderDrawColor(ctx->renderer, r, g, b, 255);
-        if (ctx->action.draw_box) {
-            SDL_RenderRect(ctx->renderer, &ctx->box);
-        }
-
-        if (box_ptr > 0) {
-            SDL_RenderRects(ctx->renderer, boxes, box_ptr);
+            for (size_t i = 0; i < symbol_ptr; i++) {
+                draw_symbol(ctx, &symbols[i]);
+            }
+            if (ctx->action.draw_symbol) {
+                draw_symbol(ctx, &ctx->active_symbol);
+            }
         }
 
         if (ctx->action.take_screenshot) {
@@ -237,6 +256,12 @@ static void run(Context *ctx)
     }
 }
 
+static void set_context_defaults(Context *ctx)
+{
+    ctx->imgui.fg_color[0] = 1.0f;
+    ctx->active_symbol_type = SYMBOL_BOX;
+}
+
 int main(int argc, char *argv[]) {
 
     Context ctx;
@@ -253,9 +278,15 @@ int main(int argc, char *argv[]) {
         goto out;
     }
 
+    set_context_defaults(&ctx);
+
     run(&ctx);
 
 out:
+
+    if (ctx.image != NULL) {
+        SDL_DestroyTexture(ctx.image);
+    }
     if (ctx.renderer != NULL) {
         SDL_DestroyRenderer(ctx.renderer);
     }

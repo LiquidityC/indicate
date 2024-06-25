@@ -44,6 +44,7 @@ target_compile_definitions(imgui_impl PRIVATE IMGUI_IMPL_API=extern\ \"C\")
 add_executable(${PROJECT_NAME}
 	src/main.c
 	src/gui.c
+	src/draw.c
 )
 target_link_libraries(${PROJECT_NAME}
 	SDL3-static

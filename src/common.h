@@ -12,23 +12,44 @@
 
 typedef unsigned char u8;
 
+typedef enum SymbolType {
+    SYMBOL_BOX,
+    SYMBOL_LINE,
+} SymbolType;
+
+typedef struct Symbol {
+    SymbolType type;
+    SDL_FPoint start;
+    SDL_FPoint end;
+    struct {
+        u8 r;
+        u8 g;
+        u8 b;
+        u8 a;
+    } color;
+} Symbol;
+
+typedef struct UserAction {
+    bool lbutton_down;
+    bool draw_symbol;
+    bool take_screenshot;
+    bool rbutton_press;
+    bool undo;
+} UserAction;
+
 typedef struct Context {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *image;
-    SDL_FRect box;
+    SymbolType active_symbol_type;
+    Symbol active_symbol;
     u8 clipboard_data[CLIPBOARD_SIZE];
     size_t clipboard_data_len;
-    struct {
-        bool lbutton_down;
-        bool draw_box;
-        bool take_screenshot;
-        bool rbutton_press;
-    } action;
+    UserAction action;
     struct {
         ImGuiContext *ctx;
         ImGuiIO *io;
-        float box_color[3];
+        float fg_color[3];
     } imgui;
 } Context;
 

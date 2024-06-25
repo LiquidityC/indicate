@@ -28,9 +28,6 @@ int gui_init(Context *ctx)
         goto out;
     }
 
-    /* Set context defaults */
-    ctx->imgui.box_color[0] = 1.0f;
-
     result = 0;
 out:
     return result;
@@ -58,16 +55,6 @@ void gui_update(Context *ctx)
         ImGui_ImplSDL3_NewFrame();
         igNewFrame();
 
-        if (ctx->action.rbutton_press) {
-            igBegin("Controls", &ctx->action.rbutton_press, ImGuiWindowFlags_NoMove);
-
-            igColorEdit3("Box color", ctx->imgui.box_color, 0);
-
-            igSetWindowPos_Vec2((ImVec2) {0, 0}, 0);
-            igSetWindowSize_Vec2((ImVec2) { 0, 0 }, 0);
-            igEnd();
-        }
-
         if (ctx->image == NULL) {
             igBegin("Image", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 
@@ -76,6 +63,24 @@ void gui_update(Context *ctx)
 
             igText("No image in clipboard");
             igSetWindowPos_Vec2((ImVec2) { (float) w/2 -  igGetWindowWidth()/2, (float) h/2 - igGetWindowHeight()/2 }, 0);
+            igEnd();
+            return;
+        }
+
+        if (ctx->action.rbutton_press) {
+            igBegin("Controls", &ctx->action.rbutton_press, ImGuiWindowFlags_NoMove);
+
+            igColorEdit3("Color", ctx->imgui.fg_color, 0);
+
+            igRadioButton_IntPtr("Box", (int *) &ctx->active_symbol_type, SYMBOL_BOX);
+            igRadioButton_IntPtr("Line", (int*) &ctx->active_symbol_type, SYMBOL_LINE);
+
+            if (igButton("Undo", (ImVec2) {50, 20})) {
+                ctx->action.undo = true;
+            }
+
+            igSetWindowPos_Vec2((ImVec2) {0, 0}, 0);
+            igSetWindowSize_Vec2((ImVec2) { 0, 0 }, 0);
             igEnd();
         }
 }
