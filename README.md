@@ -37,33 +37,6 @@ PR. I will not do it for you because I won't have time and I personally don't
 need it. That does not mean that I'm not interested in seeing this software
 improve. My time is limited is all. Please send PRs.
 
-## It's not working
-
-If you're on `wayland` using `opengl` (maybe `vulcan`) then see this
-[issue](https://github.com/libsdl-org/SDL/issues/7647). You can manually patch
-it out inside your the SDL submodule. I'm sure it will get patched downstream
-and I don't want to juggle a parallel fix because I'm not that comfortable with
-SDL video driver code and I don't have time to get comfortable with it right
-now.
-
-This is my patch. It is not a "good" patch. It's a "I need this to work" patch.
-
-```diff
-diff --git a/src/video/SDL_egl.c b/src/video/SDL_egl.c
-index 59d240258..c56490763 100644
---- a/src/video/SDL_egl.c
-+++ b/src/video/SDL_egl.c
-@@ -792,6 +792,8 @@ static int SDL_EGL_PrivateChooseConfig(SDL_VideoDevice *_this, SDL_bool set_conf
-         attribs[i++] = EGL_PBUFFER_BIT;
-     }
-
-+    attribs[i++] = EGL_SWAP_BEHAVIOR_PRESERVED_BIT;
-+
-     attribs[i++] = EGL_RENDERABLE_TYPE;
-     if (_this->gl_config.profile_mask == SDL_GL_CONTEXT_PROFILE_ES) {
- #ifdef EGL_KHR_create_context
-```
-
 ## Contribute?
 
 Please do

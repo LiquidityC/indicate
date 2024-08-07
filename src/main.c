@@ -16,6 +16,8 @@ static const char *mime_types[MIME_TYPES_LEN] = { "image/png" };
 static Symbol symbols[SYMBOL_COUNT] = {0};
 static size_t symbol_ptr = 0;
 
+#define Err(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
+
 static const void* read_clipboard_data(void *userdata, const char *mime_type, size_t *size)
 {
     Context *ctx = userdata;
@@ -36,7 +38,17 @@ out:
 
 static void clean_clipboard_data(void *userdata)
 {
-    // Pass
+    Context *ctx = userdata;
+
+    /* Only clean it it isn't this app that is providing the data. Eg. We're
+     * not actively taking a screenshot */
+    if (!ctx->action.take_screenshot) {
+        memset(ctx->clipboard_data, 0, sizeof(ctx->clipboard_data));
+        ctx->clipboard_data_len = 0;
+        symbol_ptr = 0;
+        memset(symbols, 0, sizeof(symbols));
+        ctx->clipboard_data_provider = false;
+    }
 }
 
 static int read_image_from_clipboard(Context *ctx)
@@ -47,34 +59,39 @@ static int read_image_from_clipboard(Context *ctx)
     size_t len = 0;
     float w, h;
 
-    SDL_Log("Clipboard has image/png data");
     data = SDL_GetClipboardData("image/png", &len);
     if (data == NULL) {
-        SDL_Log("SDL_GetClipboardData failed: %s", SDL_GetError());
+        Err("SDL_GetClipboardData failed: %s", SDL_GetError());
         goto out;
+    }
+
+    /* Clean up the current image */
+    if (ctx->image != NULL) {
+        SDL_DestroyTexture(ctx->image);
+        ctx->image = NULL;
     }
 
     stream = SDL_IOFromMem(data, len);
     if (stream == NULL) {
-        SDL_Log("SDL_IOFromMem failed: %s", SDL_GetError());
+        Err("SDL_IOFromMem failed: %s", SDL_GetError());
         goto out;
     }
 
     ctx->image = IMG_LoadTexture_IO(ctx->renderer, stream, SDL_TRUE);
     if (ctx->image == NULL) {
-        SDL_Log("IMG_LoadTexture_IO failed: %s", IMG_GetError());
+        Err("IMG_LoadTexture_IO failed: %s", IMG_GetError());
         goto out;
     }
 
     result = SDL_GetTextureSize(ctx->image, &w, &h);
     if (result != 0) {
-        SDL_Log("SDL_GetTextureSize failed: %s", SDL_GetError());
+        Err("SDL_GetTextureSize failed: %s", SDL_GetError());
         goto out;
     }
 
     result = SDL_SetWindowSize(ctx->window, w, h);
     if (result != 0) {
-        SDL_Log("SDL_SetWindowSize failed: %s", SDL_GetError());
+        Err("SDL_SetWindowSize failed: %s", SDL_GetError());
         goto out;
     }
 
@@ -97,24 +114,23 @@ static int init_sdl(Context *ctx)
 
     result = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
     if (result != 0) {
-        SDL_Log("SDL_Init failed: %s", SDL_GetError());
+        Err("SDL_Init failed: %s", SDL_GetError());
         goto out;
     }
 
     result = SDL_CreateWindowAndRenderer(PROGRAM_NAME " " PROGRAM_VERSION, 640, 480, 0, &ctx->window, &ctx->renderer);
     if (result != 0) {
-        SDL_Log("SDL_CreateWindowAndRenderer failed: %s", SDL_GetError());
+        Err("SDL_CreateWindowAndRenderer failed: %s", SDL_GetError());
         goto out;
     }
 
     result = IMG_Init(img_flags);
     if (result != img_flags) {
-        SDL_Log("IMG_Init failed: %s", IMG_GetError());
+        Err("IMG_Init failed: %s", IMG_GetError());
         goto out;
     }
 
     const char *renderer_name = SDL_GetRendererName(ctx->renderer);
-    SDL_Log("Renderer: %s\n", renderer_name);
 
     result = 0;
 out:
@@ -129,12 +145,6 @@ static void handle_events(Context *ctx, bool *quit)
         if (event.type == SDL_EVENT_QUIT) {
             *quit = true;
             break;
-        } else if (event.type == SDL_EVENT_CLIPBOARD_UPDATE) {
-            if (ctx->image == NULL && SDL_HasClipboardData("image/png")) {
-                if (read_image_from_clipboard(ctx) != 0) {
-                    SDL_Log("read_image_from_clipboard failed");
-                }
-            }
         }
 
         gui_process_event(&event);
@@ -142,14 +152,14 @@ static void handle_events(Context *ctx, bool *quit)
         if (!gui_has_keyboard(ctx)){
             switch (event.type) {
                 case SDL_EVENT_KEY_DOWN:
-                    if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    if (event.key.key == SDLK_ESCAPE) {
                         *quit = true;
                         break;
-                    } else if (event.key.keysym.sym == SDLK_z && event.key.keysym.mod & SDL_KMOD_CTRL) {
+                    } else if (event.key.key == SDLK_Z && event.key.mod & SDL_KMOD_CTRL) {
                         ctx->action.undo = true;
-                    } else if (event.key.keysym.sym == SDLK_1) {
+                    } else if (event.key.key == SDLK_1) {
                         ctx->opt.symbol_type = SYMBOL_BOX;
-                    } else if (event.key.keysym.sym == SDLK_2) {
+                    } else if (event.key.key == SDLK_2) {
                         ctx->opt.symbol_type = SYMBOL_LINE;
                     }
                     break;
@@ -160,9 +170,9 @@ static void handle_events(Context *ctx, bool *quit)
         if (!gui_has_mouse(ctx)) {
             switch (event.type) {
                 case SDL_EVENT_CLIPBOARD_UPDATE:
-                    if (ctx->image == NULL && SDL_HasClipboardData("image/png")) {
+                    if (!ctx->clipboard_data_provider && SDL_HasClipboardData("image/png")) {
                         if (read_image_from_clipboard(ctx) != 0) {
-                            SDL_Log("read_image_from_clipboard failed");
+                            Err("read_image_from_clipboard failed");
                         }
                     }
                     break;
@@ -210,6 +220,11 @@ static void run(Context *ctx)
 {
     bool quit = false;
 
+    /* We don't get a clipboard update event when the program starts, so we need to check manually */
+    if (SDL_HasClipboardData("image/png")) {
+        read_image_from_clipboard(ctx);
+    }
+
     while (!quit) {
         handle_events(ctx, &quit);
 
@@ -237,7 +252,6 @@ static void run(Context *ctx)
         }
 
         if (ctx->action.take_screenshot) {
-            SDL_Log("Rendering to png");
             SDL_Surface *surf = SDL_RenderReadPixels(ctx->renderer, NULL);
             if (surf != NULL) {
                 SDL_IOStream *stream = SDL_IOFromMem(ctx->clipboard_data, CLIPBOARD_SIZE);
@@ -246,9 +260,14 @@ static void run(Context *ctx)
                 SDL_CloseIO(stream);
                 SDL_DestroySurface(surf);
 
+                ctx->clipboard_data_provider = true;
                 SDL_SetClipboardData(read_clipboard_data, clean_clipboard_data, ctx, mime_types, MIME_TYPES_LEN);
             }
 
+            /* It's importante that the flag is reset after the clipboard has
+             * been updated.
+             *
+             * @see clean_clipboard_data */
             ctx->action.take_screenshot = false;
         }
 

@@ -50,6 +50,7 @@ typedef struct Context {
     u8 clipboard_data[CLIPBOARD_SIZE];
     size_t clipboard_data_len;
     UserAction action;
+    bool clipboard_data_provider;
     struct {
         SymbolType symbol_type;
         int size;
