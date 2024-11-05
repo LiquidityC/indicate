@@ -77,9 +77,9 @@ static int read_image_from_clipboard(Context *ctx)
         goto out;
     }
 
-    ctx->image = IMG_LoadTexture_IO(ctx->renderer, stream, SDL_TRUE);
+    ctx->image = IMG_LoadTexture_IO(ctx->renderer, stream, true);
     if (ctx->image == NULL) {
-        Err("IMG_LoadTexture_IO failed: %s", IMG_GetError());
+        Err("IMG_LoadTexture_IO failed: %s", SDL_GetError());
         goto out;
     }
 
@@ -108,29 +108,27 @@ static int init_sdl(Context *ctx)
 {
     static const int img_flags = IMG_INIT_PNG | IMG_INIT_JPG;
 
-    int result = 0;
+    int result = -1;
 
     memset(ctx, 0, sizeof(*ctx));
 
-    result = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
-    if (result != 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         Err("SDL_Init failed: %s", SDL_GetError());
         goto out;
     }
 
-    result = SDL_CreateWindowAndRenderer(PROGRAM_NAME " " PROGRAM_VERSION, 640, 480, 0, &ctx->window, &ctx->renderer);
-    if (result != 0) {
+    if (!SDL_CreateWindowAndRenderer(PROGRAM_NAME " " PROGRAM_VERSION, 640, 480, 0, &ctx->window, &ctx->renderer)) {
         Err("SDL_CreateWindowAndRenderer failed: %s", SDL_GetError());
         goto out;
     }
 
     result = IMG_Init(img_flags);
     if (result != img_flags) {
-        Err("IMG_Init failed: %s", IMG_GetError());
+        Err("IMG_Init failed: %s", SDL_GetError());
+        result = -1;
         goto out;
     }
 
-    const char *renderer_name = SDL_GetRendererName(ctx->renderer);
 
     result = 0;
 out:
@@ -255,7 +253,7 @@ static void run(Context *ctx)
             SDL_Surface *surf = SDL_RenderReadPixels(ctx->renderer, NULL);
             if (surf != NULL) {
                 SDL_IOStream *stream = SDL_IOFromMem(ctx->clipboard_data, CLIPBOARD_SIZE);
-                IMG_SavePNG_IO(surf, stream, SDL_FALSE);
+                IMG_SavePNG_IO(surf, stream, false);
                 ctx->clipboard_data_len = SDL_TellIO(stream);
                 SDL_CloseIO(stream);
                 SDL_DestroySurface(surf);

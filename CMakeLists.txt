@@ -4,7 +4,7 @@ project(indicate LANGUAGES C CXX VERSION 0.1.0)
 
 # Compile and link flags
 # set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -fsanitize=address -fno-omit-frame-pointer")
-# set(CMAKE_C_LINKER_FLAGS_DEBUG "${CMAKE_C_LINKER_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer")
+# set(CMAKE_C_LINKER_FLAGS_DEBUG "${CMAKE_C_LINKER_FLAGS_DEBUG} -lasan -fsanitize=address -fno-omit-frame-pointer")
 # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -fsanitize=address -fno-omit-frame-pointer")
 # set(CMAKE_CXX_LINKER_FLAGS_DEBUG "${CMAKE_CXX_LINKER_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer")
 
@@ -25,7 +25,10 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug")
 	set(DEBUG 1)
 endif ()
 
-add_definitions(-DIMGUI_DISABLE_OBSOLETE_KEYIO)
+add_definitions(
+	-DIMGUI_DISABLE_OBSOLETE_KEYIO
+	-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS
+)
 
 # Build the imgui backend (SDL3/sdl_renderer) lib
 file(GLOB IMGUI_SRC CONFIGURE_DEPENDS cimgui/imgui/*.cpp)
