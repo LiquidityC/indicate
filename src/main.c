@@ -27,6 +27,8 @@ static const void* read_clipboard_data(void *userdata, const char *mime_type, si
         goto out;
     }
 
+    printf("Clipboard data requested: %s\n", mime_type);
+
     if (strcmp(mime_type, "image/png") == 0) {
         *size = ctx->clipboard_data_len;
         data = ctx->clipboard_data;
@@ -51,9 +53,9 @@ static void clean_clipboard_data(void *userdata)
     }
 }
 
-static int read_image_from_clipboard(Context *ctx)
+static bool read_image_from_clipboard(Context *ctx)
 {
-    int result = -1;
+    bool result = false;
     SDL_IOStream *stream = NULL;
     u8 *data = NULL;
     size_t len = 0;
@@ -83,19 +85,17 @@ static int read_image_from_clipboard(Context *ctx)
         goto out;
     }
 
-    result = SDL_GetTextureSize(ctx->image, &w, &h);
-    if (result != 0) {
+    if (!SDL_GetTextureSize(ctx->image, &w, &h)) {
         Err("SDL_GetTextureSize failed: %s", SDL_GetError());
         goto out;
     }
 
-    result = SDL_SetWindowSize(ctx->window, w, h);
-    if (result != 0) {
+    if (!SDL_SetWindowSize(ctx->window, w, h)) {
         Err("SDL_SetWindowSize failed: %s", SDL_GetError());
         goto out;
     }
 
-    result = 0;
+    result = true;
 out:
     if (data != NULL) {
         SDL_free(data);
@@ -159,6 +159,19 @@ static void handle_events(Context *ctx, bool *quit)
                         ctx->opt.symbol_type = SYMBOL_BOX;
                     } else if (event.key.key == SDLK_2) {
                         ctx->opt.symbol_type = SYMBOL_LINE;
+                    } else if (event.key.key == SDLK_SPACE) {
+                        size_t size;
+                        const uint8_t *data;
+                        data = SDL_GetClipboardData("image/bmp", &size);
+                        if (size > 0) {
+                            SDL_Log("Clipboard has image/bmp data: %zu bytes", size);
+                        } else {
+                            SDL_Log("Clipboard does not have image/bmp data");
+                        }
+
+                        if (data) {
+                            printf("Data received\n");
+                        }
                     }
                     break;
 
@@ -169,7 +182,7 @@ static void handle_events(Context *ctx, bool *quit)
             switch (event.type) {
                 case SDL_EVENT_CLIPBOARD_UPDATE:
                     if (!ctx->clipboard_data_provider && SDL_HasClipboardData("image/png")) {
-                        if (read_image_from_clipboard(ctx) != 0) {
+                        if (!read_image_from_clipboard(ctx)) {
                             Err("read_image_from_clipboard failed");
                         }
                     }
