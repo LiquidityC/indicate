@@ -73,6 +73,7 @@ void gui_update(Context *ctx)
             igColorEdit3("Color", ctx->imgui.fg_color, 0);
 
             igRadioButton_IntPtr("Box", (int *) &ctx->opt.symbol_type, SYMBOL_BOX);
+            igRadioButton_IntPtr("Box fill", (int *) &ctx->opt.symbol_type, SYMBOL_BOX_FILL);
             igRadioButton_IntPtr("Line", (int*) &ctx->opt.symbol_type, SYMBOL_LINE);
 
             if (ctx->opt.symbol_type == SYMBOL_BOX) {

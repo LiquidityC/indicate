@@ -158,6 +158,8 @@ static void handle_events(Context *ctx, bool *quit)
                     } else if (event.key.key == SDLK_1) {
                         ctx->opt.symbol_type = SYMBOL_BOX;
                     } else if (event.key.key == SDLK_2) {
+                        ctx->opt.symbol_type = SYMBOL_BOX_FILL;
+                    } else if (event.key.key == SDLK_3) {
                         ctx->opt.symbol_type = SYMBOL_LINE;
                     } else if (event.key.key == SDLK_SPACE) {
                         size_t size;

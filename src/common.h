@@ -18,6 +18,7 @@ typedef unsigned char u8;
 
 typedef enum SymbolType {
     SYMBOL_BOX,
+    SYMBOL_BOX_FILL,
     SYMBOL_LINE,
 } SymbolType;
 
