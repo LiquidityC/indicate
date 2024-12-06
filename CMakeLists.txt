@@ -11,6 +11,10 @@ project(indicate LANGUAGES C CXX VERSION 1.0.0)
 # Modules
 # set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
+if(APPLE)
+    enable_language(OBJC)
+endif()
+
 set(SDL_STATIC ON)
 set(SDL_SHARED OFF)
 set(SDL_TEST OFF)
@@ -35,6 +39,8 @@ set(SDLIMAGE_WEBP OFF)
 set(SDLIMAGE_XCF OFF)
 set(SDLIMAGE_XPM OFF)
 set(SDLIMAGE_XV OFF)
+set(SDLIMAGE_STB OFF)
+set(SDLIMAGE_IMAGEIO OFF)
 add_subdirectory(SDL_image)
 
 set(IMGUI_STATIC ON CACHE STRING "Build as a static library" FORCE)
