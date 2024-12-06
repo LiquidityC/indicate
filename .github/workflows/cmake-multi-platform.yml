@@ -37,10 +37,6 @@ jobs:
             cmake_args: '-GNinja'
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
     - name: Get submodule hash
       id: get-submodule-hash
       run: |
@@ -54,6 +50,10 @@ jobs:
           ${{ github.workspace }}/SDL
           ${{ github.workspace }}/SDL_image
         key: ${{ runner.os }}-submodule-${{ steps.get-submodule-hash.outputs.submodulehash }}
+
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
