@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7)
 
-project(indicate LANGUAGES C CXX VERSION 0.1.0)
+project(indicate LANGUAGES C CXX VERSION 1.0.0)
 
 # Compile and link flags
 # set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -fsanitize=address -fno-omit-frame-pointer")
@@ -18,7 +18,7 @@ set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(SDL_image)
 
 set(IMGUI_STATIC ON CACHE STRING "Build as a static library" FORCE)
-add_subdirectory(cimgui)
+add_subdirectory(cimgui EXCLUDE_FROM_ALL)
 
 # Environment defines
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
@@ -50,6 +50,7 @@ add_executable(${PROJECT_NAME}
 	src/draw.c
 )
 target_link_libraries(${PROJECT_NAME}
+	PRIVATE
 	SDL3-static
 	SDL3_image-static
 	cimgui
@@ -68,13 +69,16 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 )
 
 include(GNUInstallDirs)
-install(TARGETS ${PROJECT_NAME}
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+install(
+	TARGETS ${PROJECT_NAME}
+	EXPORT "${PROJECT_NAME}Targets"
+	#RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	COMPONENT ${PROJECT_NAME}
 )
 
-set(CPACK_INSTALL_CMAKE_PROJECTS "${PROJECT_BINARY_DIR};indicate;Release;.")
-set(CPACK_PACKAGE_NAME "indicate")
+# Packaging options
+set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 set(CPACK_PACKAGE_VENDOR "Linus Probert")
 set(CPACK_PACKAGE_CONTACT "Linus Probert <linus.probert@gmail.com>")
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
@@ -83,6 +87,12 @@ set(CPACK_PACKAGE_DIRECTORY ${PROJECT_BINARY_DIR}/package)
 set(CPACK_PACKAGE_VERSION_MAJOR ${breakhack_MAJOR_VERSION})
 set(CPACK_PACKAGE_VERSION_MINOR ${breakhack_MINOR_VERSION})
 set(CPACK_PACKAGE_VERSION_PATCH ${breakhack_PATCH_VERSION})
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "BreakHack")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY ${CPACK_PACKAGE_NAME})
 set(CPACK_PACKAGE_CHECKSUM "MD5")
+
+# DEB options
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Linus Probert")
+set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+set(CPACK_DEBIAN_COMPONENT_INSTALL ON)
+
 include(CPack)
