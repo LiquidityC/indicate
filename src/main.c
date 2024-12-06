@@ -161,19 +161,26 @@ static void handle_events(Context *ctx, bool *quit)
                         ctx->opt.symbol_type = SYMBOL_BOX_FILL;
                     } else if (event.key.key == SDLK_3) {
                         ctx->opt.symbol_type = SYMBOL_LINE;
-                    } else if (event.key.key == SDLK_SPACE) {
-                        size_t size;
-                        const uint8_t *data;
-                        data = SDL_GetClipboardData("image/bmp", &size);
-                        if (size > 0) {
-                            SDL_Log("Clipboard has image/bmp data: %zu bytes", size);
-                        } else {
-                            SDL_Log("Clipboard does not have image/bmp data");
-                        }
-
-                        if (data) {
-                            printf("Data received\n");
-                        }
+                    } else if (event.key.key == SDLK_R) {
+                        ctx->imgui.fg_color[0] = 1.0f;
+                        ctx->imgui.fg_color[1] = 0.0f;
+                        ctx->imgui.fg_color[2] = 0.0f;
+                    } else if (event.key.key == SDLK_G) {
+                        ctx->imgui.fg_color[0] = 0.0f;
+                        ctx->imgui.fg_color[1] = 1.0f;
+                        ctx->imgui.fg_color[2] = 0.0f;
+                    } else if (event.key.key == SDLK_B) {
+                        ctx->imgui.fg_color[0] = 0.0f;
+                        ctx->imgui.fg_color[1] = 0.0f;
+                        ctx->imgui.fg_color[2] = 1.0f;
+                    } else if (event.key.key == SDLK_Y) {
+                        ctx->imgui.fg_color[0] = 1.0f;
+                        ctx->imgui.fg_color[1] = 1.0f;
+                        ctx->imgui.fg_color[2] = 0.0f;
+                    } else if (event.key.key == SDLK_P) {
+                        ctx->imgui.fg_color[0] = 1.0f;
+                        ctx->imgui.fg_color[1] = 0.0f;
+                        ctx->imgui.fg_color[2] = 1.0f;
                     }
                     break;
 
