@@ -30,26 +30,11 @@ jobs:
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
-            cmake_args: '-GNinja'
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-            cmake_args: '-GNinja'
 
     steps:
-    - name: Get submodule hash
-      id: get-submodule-hash
-      run: |
-        echo "submodulehash=$(git submodule | xargs | md5sum | cut -d' ' -f1)" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - uses: actions/cache@v4
-      with:
-        path: |
-          ${{ github.workspace }}/cimgui
-          ${{ github.workspace }}/SDL
-          ${{ github.workspace }}/SDL_image
-        key: ${{ runner.os }}-submodule-${{ steps.get-submodule-hash.outputs.submodulehash }}
 
     - uses: actions/checkout@v4
       with:
@@ -65,7 +50,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install \
-          ninja-build
+          ninja-build \
+          rpm
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
@@ -82,8 +68,10 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DCMAKE_C_COMPILER_LAUNCHER=ccache
+        -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+        -GNinja
         -S ${{ github.workspace }}
-        ${{ matrix.cmake_args }}
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
@@ -94,3 +82,20 @@ jobs:
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
+
+    - name: Package
+      run: cd ${{ steps.strings.outputs.build-output-dir }} && cpack -G "DEB;RPM"
+
+    - name: Upload DEB
+      if: ${{ matrix.c_compiler == 'gcc' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: indicate-deb
+        path: ${{ steps.strings.outputs.build-output-dir }}/package/*.deb
+
+    - name: Upload RPM
+      if: ${{ matrix.c_compiler == 'gcc' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: indicate-rpm
+        path: ${{ steps.strings.outputs.build-output-dir }}/package/*.rpm
