@@ -23,31 +23,52 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         build_type: [Release]
-        c_compiler: [gcc, clang, cl]
+        c_compiler: [gcc, clang]
         include:
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
+            cmake_args: '-GNinja'
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-        exclude:
-          - os: windows-latest
-            c_compiler: gcc
-          - os: windows-latest
+            cmake_args: '-GNinja'
+          - os: macos-latest
             c_compiler: clang
-          - os: ubuntu-latest
-            c_compiler: cl
+            cpp_compiler: clang++
+            cmake_args: '-GNinja'
+          - os: macos-latest
+            c_compiler: gcc
+            cpp_compiler: gcc++
+            cmake_args: '-GNinja'
 
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ github.job }}-${{ matrix.os }}
+
+    - name: Set up Linux dependencies
+      if: ${{ runner.os == 'Linux' }}
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install \
+          ninja-build
+
+    - name: Set up Macos dependencies
+      if: ${{ runner.os == 'macOS' }}
+      run: |
+        brew install \
+          libtool \
+          ninja \
+          gcc \
+          pkg-config
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
@@ -65,6 +86,7 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
+        ${{ matrix.cmake_args }}
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
