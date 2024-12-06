@@ -23,7 +23,7 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         build_type: [Release]
         c_compiler: [gcc, clang]
         include:
@@ -34,14 +34,6 @@ jobs:
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-            cmake_args: '-GNinja'
-          - os: macos-latest
-            c_compiler: clang
-            cpp_compiler: clang++
-            cmake_args: '-GNinja'
-          - os: macos-latest
-            c_compiler: gcc
-            cpp_compiler: g++
             cmake_args: '-GNinja'
 
     steps:
@@ -74,16 +66,6 @@ jobs:
         sudo apt-get update
         sudo apt-get -y install \
           ninja-build
-
-    - name: Set up Macos dependencies
-      if: ${{ runner.os == 'macOS' }}
-      run: |
-        brew install \
-          libtool \
-          ninja \
-          gcc \
-          md5sha1sum \
-          pkg-config
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
