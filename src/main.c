@@ -106,8 +106,6 @@ out:
 
 static int init_sdl(Context *ctx)
 {
-    static const int img_flags = IMG_INIT_PNG | IMG_INIT_JPG;
-
     int result = -1;
 
     memset(ctx, 0, sizeof(*ctx));
@@ -121,14 +119,6 @@ static int init_sdl(Context *ctx)
         Err("SDL_CreateWindowAndRenderer failed: %s", SDL_GetError());
         goto out;
     }
-
-    result = IMG_Init(img_flags);
-    if (result != img_flags) {
-        Err("IMG_Init failed: %s", SDL_GetError());
-        result = -1;
-        goto out;
-    }
-
 
     result = 0;
 out:
