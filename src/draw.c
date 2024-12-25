@@ -1,4 +1,4 @@
-#include "SDL.h"
+#include <SDL3/SDL.h>
 #include "draw.h"
 
 static void draw_line(Context *ctx, SDL_FPoint start, SDL_FPoint end)

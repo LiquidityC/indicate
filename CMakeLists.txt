@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7)
 
-project(indicate LANGUAGES C CXX VERSION 1.1.1)
+project(indicate LANGUAGES C CXX VERSION 1.2.0)
 
 # Compile and link flags
 # set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -fsanitize=address -fno-omit-frame-pointer")
@@ -77,14 +77,12 @@ add_executable(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME}
 	PRIVATE
-	SDL3-static
-	SDL3_image-static
+	SDL3::SDL3-static
+	SDL3_image::SDL3_image-static
 	cimgui
 	imgui_impl
 )
 target_include_directories(${PROJECT_NAME} PRIVATE
-	SDL/include/SDL3
-	SDL_image/include/SDL3_image
 	cimgui
 	cimgui/imgui/backends
 )

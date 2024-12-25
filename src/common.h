@@ -3,8 +3,8 @@
 
 #define CLIPBOARD_SIZE (1024 * 1024)
 
-#include "SDL.h"
-#include "SDL_image.h"
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 #include <stdbool.h>
 
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
