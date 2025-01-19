@@ -96,6 +96,11 @@ static bool read_image_from_clipboard(Context *ctx)
         goto out;
     }
 
+    /* Re-center the window */
+    if (!SDL_SetWindowPosition(ctx->window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED)) {
+        Err("SDL_SetWindowPosition failed: %s", SDL_GetError());
+    }
+
     result = true;
 out:
     if (data != NULL) {
