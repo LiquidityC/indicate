@@ -29,19 +29,17 @@ static void draw_box(Context *ctx, SDL_FPoint start, SDL_FPoint end, u8 width)
 
 static void draw_box_fill(Context *ctx, SDL_FPoint start, SDL_FPoint end, u8 width)
 {
-    SDL_FRect rects[MAX_STROKE_WIDTH] = {0};
 
     SDL_assert(width <= MAX_STROKE_WIDTH);
 
-    for (size_t i = 0; i < width; ++i) {
-        rects[i] = (SDL_FRect) {
-            .x = start.x + i,
-            .y = start.y + i,
-            .w = end.x - start.x - i*2,
-            .h = end.y - start.y - i*2,
-        };
-    }
-    SDL_RenderFillRects(ctx->renderer, rects, width);
+    const SDL_FRect rect = {
+        .x = start.x,
+        .y = start.y,
+        .w = end.x - start.x,
+        .h = end.y - start.y
+    };
+
+    SDL_RenderFillRect(ctx->renderer, &rect);
 }
 
 void draw_symbol(Context *ctx, Symbol *symbol)

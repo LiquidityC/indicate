@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7)
 
-project(indicate LANGUAGES C CXX VERSION 1.2.1)
+project(indicate LANGUAGES C CXX VERSION 1.2.2)
 
 # Compile and link flags
 # set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -fsanitize=address -fno-omit-frame-pointer")

@@ -18,6 +18,7 @@ static const char *mime_types[MIME_TYPES_LEN] = { "image/png" };
 
 static Symbol symbols[SYMBOL_COUNT] = {0};
 static size_t symbol_ptr = 0;
+static bool shutting_down = false;
 
 #define Err(...) SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, __VA_ARGS__)
 
@@ -41,6 +42,11 @@ out:
 
 static void clean_clipboard_data(void *userdata)
 {
+    if (shutting_down) {
+        /* We're shutting down, no need to clean up */
+        return;
+    }
+
     Context *ctx = userdata;
 
     /* Only clean it it isn't this app that is providing the data. Eg. We're
@@ -334,8 +340,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
-    Context *ctx = appstate;
+    shutting_down = true;
 
+    Context *ctx = appstate;
     if (ctx) {
         gui_shutdown(ctx);
 
