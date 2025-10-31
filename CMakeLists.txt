@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.7)
 
-project(indicate LANGUAGES C CXX VERSION 1.2.2)
+project(indicate LANGUAGES C CXX)
+
+include(cmake/git_version.cmake)
+get_version_from_git()
 
 # Compile and link flags
 # set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -fsanitize=address -fno-omit-frame-pointer")
